@@ -9,6 +9,19 @@ uniform sampler2D velocity;
 uniform int w, h;
 uniform int t;
 
+float to_density(vec3 d) {
+  return d.x + d.y * 255 + d.z * 256 * 255;
+}
+
+vec3 to_vec(float d) {
+  float x = d - int(d);
+  d = (d - x) / 255;
+  float y = d - int(d);
+  d = (d - y) / 255;
+  float z = d - int(d);
+  return vec3(x,y,z);
+}
+
 // This is to calculate transfer to neighbors
 // such that the transfer can be calculated
 // independently for each neighbor, yet sum to 1.
@@ -53,7 +66,7 @@ vec2 mass_from(vec2 v1, float d1, vec2 v2, float d2, vec2 dir) {
 
 void main() {
      vec2 pos = vec2(float(gl_FragCoord.x) / w, float(gl_FragCoord.y) / h);
-     float density_in = texture2D(density, pos).r;
+     float density_in = to_density(texture2D(density, pos).rgb);
      vec3 velocity_in = texture2D(velocity, pos).rgb - vec3(.5,.5,.5);
 
      vec2 scale = vec2(1.0 / w, 1.0 / h);
@@ -78,8 +91,22 @@ void main() {
      	     vec2 dir = vec2(dy, dx);
      	     vec2 dir_scaled = dir * scale;
 
-	     float density_loc = texture2D(density, pos + dir_scaled).r;
+	     float density_loc = to_density(texture2D(density, pos + dir_scaled).rgb);
 	     vec3 velocity_loc = texture2D(velocity, pos + dir_scaled).rgb - vec3(.5,.5,.5);
+
+	     /*
+	     if (pos.x + dir_scaled.x <= 0 || pos.x + dir_scaled.x >= 1) {
+	       density_loc = density_in;
+	       if (pos.y + dir_scaled.y <= 0 || pos.y + dir_scaled.y >= 1) {
+		 velocity_loc = -velocity_in;
+	       } else {
+		 velocity_loc = vec3(-velocity_in.x, velocity_in.y, 0);
+	       }
+	     } else if (pos.y + dir_scaled.y <= 0 || pos.y + dir_scaled.y >= 1) {
+	       density_loc = density_in;
+	       velocity_loc = vec3(velocity_in.x, -velocity_in.y, 0);
+	     }
+	     */
 
 	     dir = normalize(dir);
 
@@ -115,7 +142,7 @@ void main() {
      if (length(pos.xy - vec2(.5,.5)) < .03) {
        float time = float(t) / 1000;
        velocity_out += vec3(cos(time), sin(time),0) * .01;
-       density_res += 1;
+       density_res += .01;
      }
 
      // damping.
@@ -124,5 +151,5 @@ void main() {
      velocity_out = clamp(velocity_out, 0, 1);
 
 
-     density_out = vec3(density_res,0,0);
+     density_out = to_vec(density_res);
 }
