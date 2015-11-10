@@ -99,7 +99,7 @@ int runGame() {
     GLubyte init_density[SDL_WIDTH * SDL_HEIGHT * 3] {0};
     GLubyte init_velocity[SDL_WIDTH * SDL_HEIGHT * 3] {0};
     for (int i = 0; i < SDL_WIDTH * SDL_HEIGHT; i++) {
-      init_density[i * 3] = 100 * ((double)rand() / RAND_MAX);
+      init_density[i * 3] = 255 * ((double)rand() / RAND_MAX);
       init_density[i * 3 + 1] = init_density[i*3 + 2] = 0x00;
       //init_density[i * 3 + 1] = 255 * ((double)rand() / RAND_MAX);
       //init_velocity[i * 3] = 255 * ((double)rand() / RAND_MAX);

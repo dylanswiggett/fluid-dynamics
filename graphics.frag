@@ -9,13 +9,30 @@ uniform int w;
 uniform int h;
 
 void main() {
-     vec2 pos = vec2(float(gl_FragCoord.x) / w, float(gl_FragCoord.y) / h);
-     float density_in = texture2D(density, pos).r;
-     vec3 velocity_in = texture2D(velocity, pos).rgb - vec3(.5,.5,.5);
+  color = vec3(0,0,0);
 
-     color = vec3(1,0,0) * density_in;
-     return;
+  for (int dx = -1; dx <= 1; dx++) {
+    for (int dy = -1; dy <= 1; dy++) {
+      vec2 pos = vec2(float(gl_FragCoord.x + dx * 3) / w, float(gl_FragCoord.y + dy * 3) / h);
+      float density_in = texture2D(density, pos).r;
+      vec3 velocity_in = texture2D(velocity, pos).rgb - vec3(.5,.5,.5);
 
-     color = vec3(density_in,0,0);// + velocity_in;
-     color += vec3(0,1,0) * length(velocity_in) * density_in;
+      color += vec3(density_in,0,0);
+      color += vec3(0,1,0) * length(velocity_in) * density_in;
+    }
+  }
+
+  color /= 9;
+
+  /*
+  vec2 pos = vec2(float(gl_FragCoord.x) / w, float(gl_FragCoord.y) / h);
+  float density_in = texture2D(density, pos).r;
+  vec3 velocity_in = texture2D(velocity, pos).rgb - vec3(.5,.5,.5);
+
+  //color = vec3(1,0,0) * density_in;
+  //return;
+
+  color = vec3(density_in,0,0);// + velocity_in;
+  color += vec3(0,1,0) * length(velocity_in) * density_in;
+  */
 }
