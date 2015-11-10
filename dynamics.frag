@@ -8,39 +8,35 @@ uniform sampler2D velocity;
 
 uniform int w, h;
 
-float motion_from(vec2 src, vec2 dst) {
+// This is to calculate transfer to neighbors
+// such that the transfer can be calculated
+// independently for each neighbor, yet sum to 1.
+// Assumes length(v) <= 1
+float box_transfer(int dx, int dy, vec2 v) {
+  if (dx != 0 && dx != sign(v.x) ||
+      dy != 0 && dy != sign(v.y))
+    return 0; // Boxes cannot overlap.
 
-     vec2 dir = dst - src;
-     vec2 dir_normalized = normalize(dir);
-
-     vec3 density_src = texture2D(density, src).xyz;
-     vec2 velocity_src = texture2D(velocity, src).xy - vec2(.5, .5);
-     vec3 density_dst = texture2D(density, dst).xyz;
-     vec2 velocity_dst = texture2D(velocity, dst).xy - vec2(.5, .5);
-
-     // Transfer from liquid motion
-     float v_transfer = dot(velocity_src, dir_normalized) / 8;
-     v_transfer = clamp(v_transfer, 0, 1);
-     
-     // Transfer from diffusion
-     float total_d_src = dot(density_src, vec3(1,1,1));
-     float total_d_dst = dot(density_dst, vec3(1,1,1));
-     float d_transfer = 0;
-     if (total_d_dst < total_d_src) {
-     	d_transfer = 1 - (total_d_dst / total_d_src);
-	d_transfer /= 8;
-     }
-
-     return v_transfer + d_transfer;
+  if (dx == 0) {
+    if (dy == 0) {
+      return (1.0 - abs(v.x)) * (1.0 - abs(v.y));
+    } else {
+      return (1.0 - abs(v.x)) * abs(v.y);
+    }
+  } else {
+    if (dy == 0) {
+      return abs(v.x) * (1.0 - abs(v.y));
+    } else {
+      return abs(v.x) * abs(v.y);
+    }
+  }
 }
 
 float mass_from(vec2 v1, float d1, vec2 v2, float d2, vec2 dir) {
-  dir = normalize(dir);
-
   float mass = 0;
 
   // Motion
-  float transfer = dot(v1, dir);
+  float transfer = box_transfer(int(sign(dir.x)), int(sign(dir.y)), v1);
   if (transfer > 0) {
     mass += transfer * d1;
   }
@@ -55,12 +51,12 @@ float mass_from(vec2 v1, float d1, vec2 v2, float d2, vec2 dir) {
 
 void main() {
      vec2 pos = vec2(float(gl_FragCoord.x) / w, float(gl_FragCoord.y) / h);
-     vec3 density_in = texture2D(density, pos).rgb;
+     float density_in = texture2D(density, pos).r;
      vec3 velocity_in = texture2D(velocity, pos).rgb - vec3(.5,.5,.5);
 
      vec2 scale = vec2(1.0 / w, 1.0 / h);
-     density_out = density_in;
-     velocity_out = velocity_in * dot(density_in, vec3(1,1,1));
+     float density_res = density_in;
+     velocity_out = velocity_in * density_in;
 
      /*
       * 3 steps:
@@ -70,43 +66,49 @@ void main() {
       */
 
      // For step 3.
-     vec3 res_v;
+     vec3 res_v = vec3(0,0,0);
      float total_mass = 0;
 
      for (int dx = -1; dx <= 1; dx++) {
      	 for (int dy = -1; dy <= 1; dy++) {
 	     if (dx == 0 && dy == 0)
 	     	continue;
-	 
      	     vec2 dir = vec2(dy, dx);
      	     vec2 dir_scaled = dir * scale;
-		
-	     vec3 density_loc = texture2D(density, pos + dir_scaled).rgb;
+
+	     float density_loc = texture2D(density, pos + dir_scaled).r;
 	     vec3 velocity_loc = texture2D(velocity, pos + dir_scaled).rgb - vec3(.5,.5,.5);
 
-	     float transfer_in = motion_from(pos + dir_scaled, pos);
-	     float transfer_out = motion_from(pos, pos + dir_scaled);
+	     res_v += velocity_loc * density_loc;
+	     total_mass += density_loc;
 
-	     vec3 add_density = density_loc * transfer_in;
-	     vec3 lose_density = density_in * transfer_out;
-	     density_out += add_density - lose_density;
-	     velocity_out += vec3(dir,0) * dot(add_density, vec3(1,1,1));
-	     velocity_out -= vec3(dir,0) * dot(lose_density, vec3(1,1,1));
+	     float mass_in = mass_from(velocity_loc.rg, density_loc, velocity_in.rg, density_in, -dir);
+	     float mass_out = mass_from(velocity_in.rg, density_in, velocity_loc.rg, density_loc, dir);
+
+	     density_res += mass_in - mass_out;
+
+	     float veldir = .9;//dot(velocity_loc.xy, normalize(dir));
+	     float odir = .1;//sqrt(1 - veldir * veldir);
+
+	     velocity_out += mass_in * (velocity_loc * veldir - vec3(dir,0) * odir) -
+	       mass_out * (velocity_in * veldir + vec3(dir,0)* odir);
 	 }
      }
 
-     velocity_out /= dot(density_out, vec3(1,1,1));
-
-     // damping.
-     velocity_out *= .99;
-     velocity_out += vec3(.5, .5, .5);
-     velocity_out = clamp(velocity_out, 0, 1);
+     velocity_out /= density_res;
 
 
      // source.
      if (pos.x > .47 && pos.x < .53 && pos.y > .47 && pos.y < .53) {
-     	//velocity_out = vec3(1,0,0);
-	density_out += vec3(.1,0,0);
+       velocity_out = vec3(1,0,0);
+       density_res += .05;
      }
 
+     // damping.
+     // velocity_out *= .99;
+     velocity_out += vec3(.5, .5, .5);
+     velocity_out = clamp(velocity_out, 0, 1);
+
+
+     density_out = vec3(density_res,0,0);
 }

@@ -19,7 +19,7 @@ void buildTex(GLuint *loc, int w, int h)
     exit(0);
   }
 
-  vector<GLubyte> emptyData(w * h * 3, 0xFF);
+  vector<GLubyte> emptyData(w * h * 3, 0x00);
   glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, w, h, GL_RGB, GL_UNSIGNED_BYTE, &emptyData[0]);
 }
 

@@ -95,16 +95,18 @@ int runGame() {
     graphics = new Graphics(window, dynamics, "shader.vert", "graphics.frag", dummy);
 
     srand(time(NULL));
-    
-    GLubyte init_density[SDL_WIDTH * SDL_HEIGHT * 3];
-    GLubyte init_velocity[SDL_WIDTH * SDL_HEIGHT * 3];
+
+    GLubyte init_density[SDL_WIDTH * SDL_HEIGHT * 3] {0};
+    GLubyte init_velocity[SDL_WIDTH * SDL_HEIGHT * 3] {0};
     for (int i = 0; i < SDL_WIDTH * SDL_HEIGHT; i++) {
       init_density[i * 3] = 100 * ((double)rand() / RAND_MAX);
+      init_density[i * 3 + 1] = init_density[i*3 + 2] = 0x00;
       //init_density[i * 3 + 1] = 255 * ((double)rand() / RAND_MAX);
       //init_velocity[i * 3] = 255 * ((double)rand() / RAND_MAX);
       //init_velocity[i * 3 + 1] = 255 * ((double)rand() / RAND_MAX);
       init_velocity[i * 3] = 127;
       init_velocity[i * 3 + 1] = 127;
+      init_velocity[i * 3 + 2] = 127;
     }
     dynamics->set_density(init_density);
     dynamics->set_velocity(init_velocity);
@@ -125,8 +127,12 @@ int runGame() {
       SDL_GL_SwapWindow(window);      
       //SDL_Delay(500.0);
       SDL_Delay(10.0);
-    }
 
+      GLenum err = glGetError();
+      if (err != GL_NO_ERROR) {
+	cout << "GLSL execution error: " << err << endl;
+      }
+    }
     
     delete graphics;
     delete dynamics;
