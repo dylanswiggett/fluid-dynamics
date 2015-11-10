@@ -19,6 +19,7 @@ private:
   GLuint fb_;
   GLuint shader_;
   int w_, h_;
+  int time_;
   DummyRender *dummy_;
 
   void swap_buffers();

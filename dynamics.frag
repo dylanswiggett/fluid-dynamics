@@ -7,6 +7,7 @@ uniform sampler2D density;
 uniform sampler2D velocity;
 
 uniform int w, h;
+uniform int t;
 
 // This is to calculate transfer to neighbors
 // such that the transfer can be calculated
@@ -99,13 +100,14 @@ void main() {
 
 
      // source.
-     if (pos.x > .47 && pos.x < .53 && pos.y > .47 && pos.y < .53) {
-       velocity_out = vec3(1,0,0);
+     if (length(pos.xy - vec2(.5,.5)) < .03) {
+       float time = float(t) / 1000;
+       velocity_out = vec3(cos(time), sin(time),0);
        density_res += .05;
      }
 
      // damping.
-     // velocity_out *= .99;
+     //velocity_out *= .999; // This is *way* too severe...
      velocity_out += vec3(.5, .5, .5);
      velocity_out = clamp(velocity_out, 0, 1);
 

@@ -26,7 +26,7 @@ void buildTex(GLuint *loc, int w, int h)
 Dynamics::Dynamics(int w, int h,
 		   string vert_path, string frag_path,
 		   DummyRender *dummy) :
-  w_(w), h_(h), dummy_(dummy)
+  w_(w), h_(h), time_(0), dummy_(dummy)
 {
   shader_ = LoadShaders(vert_path.c_str(), frag_path.c_str());
 
@@ -114,6 +114,11 @@ void Dynamics::update()
   glUniform1i(loc, w_);
   loc = glGetUniformLocation(shader_, "h");
   glUniform1i(loc, h_);
+
+  loc = glGetUniformLocation(shader_, "t");
+  glUniform1i(loc, time_);
+  time_++;
+  cout << loc << time_ << endl;
 
   GLenum err = glGetError();
   if (err != GL_NO_ERROR) {
