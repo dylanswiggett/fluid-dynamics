@@ -1,6 +1,6 @@
 CXX = g++
 LINKERS = -lSDL2 -lGLEW -lGL
-FLAGS = -Wall -g -std=c++11 -rdynamic
+FLAGS = -Wall -g -std=c++11 -rdynamic -O4
 
 main: main.o Graphics.o Dynamics.o DummyRender.o shader_loader.o
 	$(CXX) $(FLAGS) -o main main.o Graphics.o Dynamics.o DummyRender.o shader_loader.o $(LINKERS)

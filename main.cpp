@@ -121,7 +121,7 @@ int runGame() {
 	}
       }
 
-      for (int i = 0; i < 6; i++)
+      for (int i = 0; i < 5; i++)
 	dynamics->update();
       graphics->update();
 

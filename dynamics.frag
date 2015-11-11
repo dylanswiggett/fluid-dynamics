@@ -129,10 +129,9 @@ void main() {
 	       */
 	 }
      }
-
      /*
-     velocity_out += res_v;
-     total_mass += density_res;
+     velocity_out += res_v * .02;
+     total_mass = total_mass * .02 + density_res;
      velocity_out /= total_mass;
      */
      
@@ -142,13 +141,14 @@ void main() {
      if (length(pos.xy - vec2(.5,.5)) < .03) {
        float time = float(t) / 1000;
        velocity_out += vec3(cos(time), sin(time),0) * .01;
-       density_res += .01;
+       density_res += .03;
      }
 
      // damping.
      // velocity_out *= .999; // This is *way* too severe...
      velocity_out += vec3(.5, .5, .5);
-     velocity_out = clamp(velocity_out, 0, 1);
+     if (length(velocity_out) > 1)
+       velocity_out = normalize(velocity_out);
 
 
      density_out = to_vec(density_res);
