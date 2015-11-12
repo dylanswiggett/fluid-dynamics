@@ -35,7 +35,7 @@ void main() {
   float density_in = clamp(to_density(texture2D(density, pos).rgb), 0, 5);
   vec3 velocity_in = texture2D(velocity, pos).rgb - vec3(.5,.5,.5);
 
-  color = velocity_in * velocity_in + vec3(0,0,density_in / 5);
+  color = (velocity_in * velocity_in) * (1 - density_in / 5) + vec3(0,0,density_in / 5);
 
   //color = vec3(1,0,0) * density_in;
   //return;

@@ -53,7 +53,7 @@ vec2 mass_from(vec2 v1, float d1, vec2 v2, float d2, vec2 dir) {
   // Motion
   float transfer = box_transfer(int(sign(dir.x)), int(sign(dir.y)), v1);
   if (transfer > 0) {
-    mot += transfer * d1;
+    mot += transfer * d1 * .8;
   }
 
   // Diffusion
